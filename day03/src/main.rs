@@ -4,34 +4,34 @@ use std::{
 };
 
 fn read_schematic(input: &str) -> Vec<Vec<char>> {
-    let mut retval = Vec::new();
+    let mut updated_schematic = Vec::new();
     let mut lines = input.lines();
 
-    // read the first line so we know how long the lines are
+    // read first line so we know how long all lines are
     // and can make a margin of dots where the first and last lines
     // are just dots.
     let first_line = lines.next().unwrap();
     let top_and_bottom_margin = vec!['.'; first_line.len() + 2];
 
     // add the margin at the top of the schematic
-    retval.push(top_and_bottom_margin.clone());
+    updated_schematic.push(top_and_bottom_margin.clone());
 
-    // add margin of one char to the left and right of first line
+    // add margin of one char, dot, to the left and right of first line
     let padded_first_line = once('.')
         .chain(first_line.chars())
         .chain(once('.'))
         .collect();
-    retval.push(padded_first_line);
+    updated_schematic.push(padded_first_line);
 
     // add margin to all other lines
     for line in lines {
         let padded_line = once('.').chain(line.chars()).chain(once('.')).collect();
-        retval.push(padded_line);
+        updated_schematic.push(padded_line);
     }
 
     // add the margin at the bottom of the schematic
-    retval.push(top_and_bottom_margin);
-    retval
+    updated_schematic.push(top_and_bottom_margin);
+    updated_schematic
 }
 
 #[allow(dead_code)]
@@ -44,6 +44,7 @@ fn print_schematic(schematic: &Vec<Vec<char>>) {
     }
 }
 
+// direction to look for adjacent symbols
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Direction {
     None,
@@ -87,7 +88,7 @@ impl Direction {
     }
 }
 
-fn is_adjacent_to_symbol(schematic: &Vec<Vec<char>>, row: usize, col: usize) -> bool {
+fn is_adjacent_to_symbol(schematic: &[Vec<char>], row: usize, col: usize) -> bool {
     fn is_symbol(c: char) -> bool {
         c != '.' && !c.is_ascii_digit()
     }
@@ -135,19 +136,15 @@ fn find_part_numbers(schematic: &Vec<Vec<char>>) -> Vec<u32> {
 }
 
 fn part_1() {
-    // let (input, expected_sum) = (include_str!("my_input.txt"), None);
     let input = include_str!("my_input.txt");
     let schematic = &read_schematic(input);
-    // print_schematic(schematic);
+
     let sum: u32 = find_part_numbers(schematic).iter().sum();
     println!("Part 1 Sum: {}", sum);
-    // if expected_sum.is_some() {
-    //     assert_eq!(sum, expected_sum.unwrap());
-    // }
 }
 
 fn find_adjacent_gear_symbol(
-    schematic: &Vec<Vec<char>>,
+    schematic: &[Vec<char>],
     row: usize,
     col: usize,
 ) -> Option<(usize, usize)> {
@@ -219,18 +216,16 @@ fn find_gear_part_nums(schematic: &Vec<Vec<char>>) -> Vec<(u32, u32)> {
 }
 
 fn part_2() {
-    // let (input, expected_sum) = (include_str!("my_input.txt"), Some(82824352));
     let input = include_str!("my_input.txt");
     let schematic = read_schematic(input);
+
     let gear_part_nums = find_gear_part_nums(&schematic);
     let gear_ratios = gear_part_nums
         .iter()
         .map(|(a, b)| (*a as u64) * (*b as u64));
+
     let sum = gear_ratios.sum::<u64>();
-    println!("part 2 sum: {}", sum);
-    // if expected_sum.is_some() {
-    //     assert_eq!(sum, expected_sum.unwrap());
-    // }
+    println!("Part 2 Sum: {}", sum);
 }
 
 fn main() {
