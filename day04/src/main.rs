@@ -44,6 +44,33 @@ fn part_1() {
     println!("Part 1 Sum: {}", sum);
 }
 
+fn part_2() {
+    let input = include_str!("my_input.txt");
+    let cards = parse(input);
+
+    let mut queue = (0..cards.len()).collect::<Vec<_>>();
+    let mut visited = 0;
+
+    while let Some(i) = queue.pop() {
+        // Keep track of how many cards we've processed
+        visited += 1;
+
+        let card = &cards[i];
+        // Only add the next card if it has a winning number
+        if card.wins == 0 {
+            continue;
+        }
+
+        // Add a new card for each winning number
+        for j in 0..card.wins as usize {
+            queue.push(j + i + 1);
+        }
+    }
+
+    println!("Part 2 Visited: {}", visited);
+}
+
 fn main() {
     part_1();
+    part_2();
 }
