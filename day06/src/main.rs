@@ -4,14 +4,13 @@
 //     distance: u64,
 // }
 
-use core::time;
 use std::iter::zip;
 
 fn ways_to_win(race_time: u64, record_distance: u64) -> u64 {
-    let a = ((race_time * race_time - 4 * record_distance) as f64).sqrt();
-    let x1 = (((race_time as f64 - a) / 2.0) + 1.0).floor();
-    let x2 = (((race_time as f64 + a) / 2.0) - 1.0).ceil();
-    (x2 - x1 + 1.0) as u64
+    let discriminant = (race_time * race_time - 4 * record_distance) as f64;
+    let x1 = (((race_time as f64 - discriminant.sqrt()) / 2.0) + 1.0).floor() as u64;
+    let x2 = (((race_time as f64 + discriminant.sqrt()) / 2.0) - 1.0).ceil() as u64;
+    x2 - x1 + 1
 }
 
 fn part_1() {
@@ -36,6 +35,8 @@ fn part_1() {
     let (times, distances) = parse_input(input);
 
     let races = zip(times.iter(), distances.iter());
+
+    //let races = times.iter().zip(distances.iter());
 
     let product = races.map(|(t, d)| ways_to_win(*t, *d)).product::<u64>();
 
