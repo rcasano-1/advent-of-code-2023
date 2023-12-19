@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::ops::AddAssign;
 
 fn add_margin(s: &str) -> String {
-    let mut result = String::new();
+    let mut margin_maze = String::new();
     let mut lines = s.lines();
 
     let first_line = lines.next().unwrap();
@@ -10,26 +10,26 @@ fn add_margin(s: &str) -> String {
 
     let blank_line = &".".repeat(len + 2);
     // add top margin
-    result.push_str(blank_line);
-    result.push('\n');
+    margin_maze.push_str(blank_line);
+    margin_maze.push('\n');
 
     // add left and right margins to first line
     let first_line_padded = format!(".{}.", first_line);
-    result.push_str(&first_line_padded);
-    result.push('\n');
+    margin_maze.push_str(&first_line_padded);
+    margin_maze.push('\n');
 
     // add left and right margins to each line
     for line in lines {
         let padded_line = format!(".{}.", line);
-        result.push_str(&padded_line);
-        result.push('\n');
+        margin_maze.push_str(&padded_line);
+        margin_maze.push('\n');
     }
 
     // add bottom margin
-    result.push_str(blank_line);
-    result.push('\n');
+    margin_maze.push_str(blank_line);
+    margin_maze.push('\n');
 
-    result
+    margin_maze
 }
 
 #[derive(Clone)]
@@ -78,10 +78,12 @@ impl std::fmt::Display for PipeMaze {
 }
 
 impl PipeMaze {
+    /// Returns the PipeSection type at the given location
     pub fn pipe_section_at(&self, (row, col): (usize, usize)) -> PipeSection {
         self.maze[row][col]
     }
 
+    /// Returns the two directions that the start position has "exits" to
     fn start_exit_directions(&self) -> (Direction, Direction) {
         use Direction::*;
         let mut next_dir = Some(North);
@@ -106,6 +108,7 @@ impl PipeMaze {
         (first.unwrap(), second.unwrap())
     }
 
+    /// Maps each character to its corresponding PipeSection type
     fn read_maze(maze_str: &str) -> Vec<Vec<PipeSection>> {
         maze_str
             .lines()
@@ -113,6 +116,7 @@ impl PipeMaze {
             .collect()
     }
 
+    /// Finds the start position in the maze (marked with an `'S'`)
     fn find_start(maze: &[Vec<PipeSection>]) -> (usize, usize) {
         for (row, line) in maze.iter().enumerate() {
             for (col, section) in line.iter().enumerate() {
@@ -141,6 +145,7 @@ enum PipeSection {
 }
 
 impl PipeSection {
+    /// Returns the PipeSection type that has exits in the given directions
     fn from_exit_directions(dir0: Direction, dir1: Direction) -> PipeSection {
         use Direction::*;
         use PipeSection::*;
@@ -155,6 +160,7 @@ impl PipeSection {
         }
     }
 
+    /// Returns the PipeSection type that corresponds to the given character
     fn from_char(c: char) -> PipeSection {
         match c {
             '|' => PipeSection::NS,
@@ -170,6 +176,7 @@ impl PipeSection {
         }
     }
 
+    /// Returns the direction that the pipe section exits to given the entry direction
     fn exit_direction(&self, entry_direction: Direction) -> Direction {
         use Direction::*;
         use PipeSection::*;
@@ -193,6 +200,7 @@ impl PipeSection {
         }
     }
 
+    /// Returns true if the pipe section has an entrance from the given direction
     fn has_entrance_from(&self, entry_direction: Direction) -> bool {
         use Direction::*;
         use PipeSection::*;
@@ -207,6 +215,7 @@ impl PipeSection {
         }
     }
 
+    /// Returns endpoints for each PipeSection type (i.e. NS -> North, South)
     #[allow(dead_code)]
     fn endpoints(&self) -> impl Iterator<Item = Direction> {
         use Direction::*;
@@ -341,23 +350,19 @@ impl std::fmt::Display for PipeSection {
 
 fn part1() {
     // let (input, expected_steps) = (include_str!("sample1a.txt"), Some(4));
-    // let (input, expected_steps) = (include_str!("sample1b.txt"), Some(8));
-    let (input, expected_steps) = (include_str!("my_input.txt"), Some(6697));
+    let (input, expected_steps) = (include_str!("sample1b.txt"), Some(8));
+    // let (input, expected_steps) = (include_str!("my_input.txt"), Some(6697));
 
-    // let input = include_str!("my_input.txt");
     let maze: PipeMaze = add_margin(input).parse().unwrap();
 
-    // travel directions
+    // Travel directions from both starting positions
     let (mut dir0, mut dir1) = maze.start_exit_directions();
     let mut pos0 = maze.start + dir0;
     let mut pos1 = maze.start + dir1;
     let mut num_steps = 1;
 
+    // Navigate the maze until the two paths meet
     while pos0 != pos1 {
-        // println!("Num steps: {}", num_steps);
-        // println!("{:#}", maze.with_location(pos0).with_location(pos1));
-        // println!();
-
         let pipe0 = maze.pipe_section_at(pos0);
         let pipe1 = maze.pipe_section_at(pos1);
         let next_dir0 = pipe0.exit_direction(dir0.flip());
@@ -398,14 +403,15 @@ fn polygon_area_trapezoid(path: &[(usize, usize)]) -> f64 {
 fn part2_picks_theorum(input: &str, expected_contained_tiles: Option<usize>) {
     let maze: PipeMaze = add_margin(input).parse().unwrap();
 
-    // travel directions
+    // Travel directions from the starting position, only going one way
     let (mut dir, _) = maze.start_exit_directions();
 
-    // follow the maze, counting the length of the path
+    // Follow the maze, counting the length of the path
     let mut route = Vec::new();
     route.push(maze.start);
     let mut pos = maze.start + dir;
 
+    // Follow the maze until we return to the start
     while pos != maze.start {
         route.push(pos);
         let pipe = maze.pipe_section_at(pos);
@@ -414,7 +420,7 @@ fn part2_picks_theorum(input: &str, expected_contained_tiles: Option<usize>) {
         dir = next_dir;
     }
 
-    route.push(maze.start); // to complete the loop, need to return to the start
+    route.push(maze.start); // To complete the loop, need to return to the start
 
     let route = route;
 
@@ -453,6 +459,7 @@ fn part2_scanlines(input: &str, expected_contained_tiles: Option<usize>) {
     loop_marked_maze.maze[maze.start.0][maze.start.1] = PipeSection::Marker;
     let mut pos = maze.start + dir;
 
+    // Follow the maze until we return to the start
     while pos != maze.start {
         let pipe = maze.pipe_section_at(pos);
         let next_dir = pipe.exit_direction(dir.flip());
@@ -461,7 +468,7 @@ fn part2_scanlines(input: &str, expected_contained_tiles: Option<usize>) {
         dir = next_dir;
     }
 
-    // Now that we know where our pipe is, we scan each line of the maze,
+    // Now that we know where our pipe is, we scan each line of the maze (input file),
     // marking which tiles are contained within our pipe's loop.
     let mut inside_outside_maze = maze.clone();
     let loop_marked_maze = loop_marked_maze;
@@ -469,12 +476,13 @@ fn part2_scanlines(input: &str, expected_contained_tiles: Option<usize>) {
     let start_tile = PipeSection::from_exit_directions(dir0, dir1);
     let mut num_internal_tiles_scanned = 0;
 
+    // Scan each row
     for (r, row) in maze.maze.iter().enumerate() {
         use PipeSection::*;
         let mut inside = false;
         let mut prev_unmatched_corner = None;
 
-        // scan west to east
+        // Scan west to east in each row
         for (c, tile) in row.iter().enumerate() {
             let tile = if (r, c) == maze.start {
                 start_tile
@@ -520,9 +528,11 @@ fn part2_scanlines(input: &str, expected_contained_tiles: Option<usize>) {
     }
 }
 
+/// Colorizes the maze for easier visualization when printing to the console
 fn colorize_maze(original: &PipeMaze, marked: &PipeMaze, inside_outside: &PipeMaze) -> String {
     use inline_colorization::*;
     let mut result = String::new();
+
     for (r, orig_row) in original.maze.iter().enumerate() {
         for (c, tile) in orig_row.iter().enumerate() {
             if (r, c) == original.start {
@@ -558,6 +568,7 @@ fn bool_to_pipe_section(b: bool) -> PipeSection {
     }
 }
 
+/// Returns true if the two corners form a U shape
 fn do_corners_form_u(left: PipeSection, right: PipeSection) -> bool {
     use PipeSection::*;
     match (left, right) {
@@ -571,8 +582,8 @@ fn main() {
 
     // let (input, expected_contained_tiles) = (include_str!("sample2a.txt"), Some(4));
     // let (input, expected_contained_tiles) = (include_str!("sample2b.txt"), Some(8_usize));
-    // let (input, expected_contained_tiles) = (include_str!("sample2c.txt"), Some(10));
-    let (input, expected_contained_tiles) = (include_str!("my_input.txt"), Some(423));
+    let (input, expected_contained_tiles) = (include_str!("sample2c.txt"), Some(10));
+    // let (input, expected_contained_tiles) = (include_str!("my_input.txt"), Some(423));
 
     part2_picks_theorum(input, expected_contained_tiles);
     part2_scanlines(input, expected_contained_tiles);
